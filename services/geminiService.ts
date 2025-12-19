@@ -35,6 +35,7 @@ export async function* generateUIStream(
     Role: ${context.role}
     Device: ${context.device}
     Theme: ${context.theme}
+    Mode: ${context.mode || 'default'}
 
     AVAILABLE COMPONENT LIBRARY (PROTOBUF DEFINITIONS):
     ${COMPONENT_SPECS}
@@ -42,6 +43,19 @@ export async function* generateUIStream(
     FEW-SHOT EXAMPLES:
     ${FEW_SHOT_EXAMPLES}
   `;
+
+  // Inject Galgame specific instructions
+  if (context.mode === 'galgame') {
+    contextPrompt += `
+    
+    *** GALGAME ENGINE ACTIVE ***
+    You are running in Visual Novel Mode.
+    1. YOUR OUTPUT MUST BE A 'vn_stage' COMPONENT.
+    2. Do not generate standard UI widgets (containers, cards) unless they are part of the game UI.
+    3. Act as a Creative Director / Game Master.
+    4. Use 'EXTERNAL_URL' (Pollinations) for backgrounds to ensure variety.
+    `;
+  }
 
   // CRITICAL: Inject previous state if it exists so the model knows what to modify
   if (previousState) {
@@ -72,7 +86,7 @@ export async function* generateUIStream(
   let accumulatedSize = 0;
 
   try {
-    const modelName = config.model || 'gemini-2.5-flash';
+    const modelName = config.model || 'gemini-3-flash-preview';
     
     // Using generateContentStream with @google/genai SDK
     const responseStream = await ai.models.generateContentStream({
@@ -154,7 +168,7 @@ export async function refineComponent(prompt: string, currentJson: any, config: 
 
   try {
     const response = await ai.models.generateContent({
-      model: config.model || 'gemini-2.5-flash',
+      model: config.model || 'gemini-3-flash-preview',
       contents: refinementPrompt,
       config: {
         systemInstruction: "You are a JSON-only UI generator.",
@@ -197,7 +211,7 @@ export async function fixComponent(error: string, badNode: any, config: ModelCon
 
   try {
      const response = await ai.models.generateContent({
-      model: config.model || 'gemini-2.5-flash',
+      model: config.model || 'gemini-3-flash-preview',
       contents: fixPrompt,
       config: {
         systemInstruction: "You are a code fixer. Output raw JSON only.",
@@ -212,5 +226,41 @@ export async function fixComponent(error: string, badNode: any, config: ModelCon
   } catch (err) {
     console.error("Auto-Fix Failed:", err);
     throw err;
+  }
+}
+
+export async function generateImage(prompt: string, style: string = 'ANIME_WATERCOLOR'): Promise<string> {
+  if (!apiKey) throw new Error("API Key missing from environment");
+  const ai = new GoogleGenAI({ apiKey });
+
+  try {
+    // We use the high quality image preview model for native generation
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-image-preview',
+      contents: { 
+        parts: [
+          { text: `${style} style. ${prompt}` }
+        ]
+      },
+      config: { 
+        imageConfig: {
+            aspectRatio: "1:1",
+            imageSize: "1K"
+        }
+      }
+    });
+
+    // Iterate through parts to find the image data
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData) {
+        return `data:image/png;base64,${part.inlineData.data}`;
+      }
+    }
+    
+    throw new Error("No image data returned from Gemini");
+  } catch (error) {
+    console.error("Image Generation Failed:", error);
+    // Return empty string to allow fallbacks or error handling in UI
+    return "";
   }
 }

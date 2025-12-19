@@ -30,6 +30,7 @@ import { Calendar } from './Calendar';
 const ChartComponent = React.lazy(() => import('./Chart').then(module => ({ default: module.ChartComponent })));
 const MapWidget = React.lazy(() => import('./Map').then(module => ({ default: module.MapWidget })));
 const Table = React.lazy(() => import('./Table').then(module => ({ default: module.Table })));
+const VNStage = React.lazy(() => import('../galgame/VNStage')); // NEW
 
 /* -------------------------------------------------------------------------- */
 /*                            COMPONENT REGISTRY MAP                          */
@@ -44,7 +45,7 @@ export const ComponentRegistry: Record<string, React.FC<any>> = {
   text: Typography,
   button: Button,
   input: Input,
-  textarea: Textarea, // NEW
+  textarea: Textarea, 
   switch: Switch,
   slider: Slider,
   tabs: Tabs, 
@@ -61,10 +62,11 @@ export const ComponentRegistry: Record<string, React.FC<any>> = {
   bento_container: BentoContainer,
   bento_card: BentoCard,
   kanban: Kanban,
-  timeline: Timeline, // NEW
-  codeblock: CodeBlock, // NEW
-  split_pane: SplitPane, // NEW
-  calendar: Calendar, // NEW
+  timeline: Timeline, 
+  codeblock: CodeBlock, 
+  split_pane: SplitPane, 
+  calendar: Calendar, 
+  vn_stage: VNStage, // NEW
 
   // Lazy Components
   chart: ChartComponent,

@@ -1,4 +1,6 @@
 
+
+
 // 3.1 Recursive Data Structure & 3.2 Action Protocol
 export interface UIAction {
   type: string;
@@ -20,7 +22,7 @@ export type ComponentType =
   | 'button'
   | 'card'
   | 'input'
-  | 'textarea' // NEW
+  | 'textarea'
   | 'stat'
   | 'chart'
   | 'separator'
@@ -37,20 +39,68 @@ export type ComponentType =
   | 'slider'
   | 'tabs'     
   | 'stepper'
-  | 'timeline'  // NEW
-  | 'codeblock' // NEW
-  | 'split_pane' // NEW
-  | 'calendar';  // NEW
+  | 'timeline'
+  | 'codeblock'
+  | 'split_pane'
+  | 'calendar'
+  | 'vn_stage'; // NEW: Visual Novel Stage
 
 // User Context for 1.1 Implicit Input
 export interface UserContext {
   role: 'admin' | 'user';
   device: 'desktop' | 'mobile';
   theme: 'dark' | 'light';
+  mode?: 'default' | 'galgame'; // NEW: App Mode
 }
 
 export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
   uiNode?: UINode; // The structured UI payload
+}
+
+// --- GALGAME TYPES ---
+
+export type ImageSource = "EXTERNAL_URL" | "GENERATED";
+
+export interface ImageAsset {
+  source: ImageSource;
+  value: string; // URL prompt or GenAI prompt
+  style?: string; // "ANIME", "REALISTIC", etc.
+}
+
+export interface VNCharacter {
+  id: string;
+  name: string;
+  avatar: ImageAsset;
+  position: "LEFT" | "CENTER" | "RIGHT" | "CLOSE_UP";
+  expression: "NEUTRAL" | "SMILE" | "ANGRY" | "BLUSH" | "SAD" | "SHOCKED";
+  animation?: {
+    type: string; // AnimationType
+    delay?: number;
+  }
+}
+
+export interface VNDialogue {
+  speaker: string;
+  content: string;
+  voice_id?: string;
+  speed?: "SLOW" | "NORMAL" | "FAST";
+}
+
+export interface VNChoice {
+  label: string;
+  action: UIAction;
+  style?: "DEFAULT" | "AGGRESSIVE" | "ROMANTIC";
+}
+
+export interface VNStageNode {
+  vn_stage: {
+    background: ImageAsset;
+    characters?: VNCharacter[];
+    dialogue: VNDialogue;
+    choices?: VNChoice[];
+    bgm?: string;
+    sfx?: string;
+  }
 }

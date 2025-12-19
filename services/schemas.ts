@@ -46,7 +46,7 @@ export const UINodeSchema: z.ZodType<any> = z.lazy(() =>
     ImageNode,
     MapNode,
     InputNode,
-    TextareaNode, // NEW
+    TextareaNode, 
     BadgeNode,
     SeparatorNode,
     BentoContainerNode,
@@ -56,10 +56,11 @@ export const UINodeSchema: z.ZodType<any> = z.lazy(() =>
     SliderNode,
     TabsNode,
     StepperNode,
-    TimelineNode, // NEW
-    CodeBlockNode, // NEW
-    SplitPaneNode, // NEW
-    CalendarNode   // NEW
+    TimelineNode,
+    CodeBlockNode,
+    SplitPaneNode,
+    CalendarNode,
+    VNStageNode // NEW
   ])
 );
 
@@ -220,7 +221,7 @@ const MapProps = z.object({
 }).passthrough();
 const MapNode = z.object({ map: MapProps });
 
-// 15. Input (UPDATED FOR VALIDATION)
+// 15. Input
 const ValidationSchema = z.object({
   required: z.boolean().optional(),
   pattern: z.string().optional(), // Regex string
@@ -234,12 +235,12 @@ const InputProps = z.object({
   placeholder: z.string().optional(),
   inputType: z.string().optional(),
   value: z.string().optional(),
-  validation: ValidationSchema.optional(), // New field
+  validation: ValidationSchema.optional(), 
   animation: AnimationSchema.optional(),
 }).passthrough();
 const InputNode = z.object({ input: InputProps });
 
-// NEW: Textarea
+// 16. Textarea
 const TextareaProps = z.object({
   label: z.string().optional(),
   placeholder: z.string().optional(),
@@ -248,8 +249,7 @@ const TextareaProps = z.object({
 }).passthrough();
 const TextareaNode = z.object({ textarea: TextareaProps });
 
-
-// 16. Badge
+// 17. Badge
 const BadgeProps = z.object({
   label: z.string().optional(),
   color: z.string().optional(),
@@ -257,10 +257,11 @@ const BadgeProps = z.object({
 }).passthrough();
 const BadgeNode = z.object({ badge: BadgeProps });
 
-// 17. Separator
-const SeparatorNode = z.object({ separator: z.object({}).passthrough().optional() });
+// 18. Separator
+// FIX: Was .optional(), which caused Zod to match empty objects (swallowing other keys in union)
+const SeparatorNode = z.object({ separator: z.object({}).passthrough() });
 
-// 18. Bento Grid
+// 19. Bento Grid
 const BentoContainerProps = z.object({
   children: NodeArray,
   animation: AnimationSchema.optional(),
@@ -277,7 +278,7 @@ const BentoCardProps = z.object({
 }).passthrough();
 const BentoCardNode = z.object({ bento_card: BentoCardProps });
 
-// 19. Kanban
+// 20. Kanban
 const KanbanItemSchema = z.union([
   z.string(),
   z.object({ id: z.string().optional(), content: z.string(), tag: z.string().optional() }).passthrough()
@@ -295,7 +296,7 @@ const KanbanProps = z.object({
 }).passthrough();
 const KanbanNode = z.object({ kanban: KanbanProps });
 
-// 20. Switch
+// 21. Switch
 const SwitchProps = z.object({
   label: z.string().optional(),
   value: z.boolean().optional().default(false),
@@ -303,7 +304,7 @@ const SwitchProps = z.object({
 }).passthrough();
 const SwitchNode = z.object({ switch: SwitchProps });
 
-// 21. Slider
+// 22. Slider
 const SliderProps = z.object({
   label: z.string().optional(),
   min: z.number().optional().default(0),
@@ -314,7 +315,7 @@ const SliderProps = z.object({
 }).passthrough();
 const SliderNode = z.object({ slider: SliderProps });
 
-// 22. Tabs
+// 23. Tabs
 const TabItemSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -329,7 +330,7 @@ const TabsProps = z.object({
 }).passthrough();
 const TabsNode = z.object({ tabs: TabsProps });
 
-// 23. Stepper
+// 24. Stepper
 const StepperItemSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -343,7 +344,7 @@ const StepperProps = z.object({
 }).passthrough();
 const StepperNode = z.object({ stepper: StepperProps });
 
-// 24. Timeline (NEW)
+// 25. Timeline
 const TimelineItemSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
@@ -359,7 +360,7 @@ const TimelineProps = z.object({
 }).passthrough();
 const TimelineNode = z.object({ timeline: TimelineProps });
 
-// 25. CodeBlock (NEW)
+// 26. CodeBlock
 const CodeBlockProps = z.object({
   code: z.string(),
   language: z.string().optional(),
@@ -368,7 +369,7 @@ const CodeBlockProps = z.object({
 }).passthrough();
 const CodeBlockNode = z.object({ codeblock: CodeBlockProps });
 
-// 26. SplitPane (NEW)
+// 27. SplitPane
 const SplitPaneProps = z.object({
   direction: z.enum(['ROW', 'COL']).optional(),
   initialSize: z.number().optional(),
@@ -377,13 +378,56 @@ const SplitPaneProps = z.object({
 }).passthrough();
 const SplitPaneNode = z.object({ split_pane: SplitPaneProps });
 
-// 27. Calendar (NEW)
+// 28. Calendar
 const CalendarProps = z.object({
   label: z.string().optional(),
   selectedDate: z.string().optional(), // YYYY-MM-DD
   animation: AnimationSchema.optional(),
 }).passthrough();
 const CalendarNode = z.object({ calendar: CalendarProps });
+
+// 29. Visual Novel Stage (Galgame)
+const ImageAssetSchema = z.object({
+  source: z.enum(['EXTERNAL_URL', 'GENERATED']),
+  value: z.string(),
+  style: z.string().optional(),
+});
+
+const VNCharacterSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  avatar: ImageAssetSchema,
+  position: z.enum(['LEFT', 'CENTER', 'RIGHT', 'CLOSE_UP']),
+  expression: z.enum(['NEUTRAL', 'SMILE', 'ANGRY', 'BLUSH', 'SAD', 'SHOCKED']),
+  animation: z.object({
+    type: z.string(),
+    delay: z.number().optional()
+  }).optional()
+});
+
+const VNDialogueSchema = z.object({
+  speaker: z.string(),
+  content: z.string(),
+  voice_id: z.string().optional(),
+  speed: z.enum(['SLOW', 'NORMAL', 'FAST']).optional()
+});
+
+const VNChoiceSchema = z.object({
+  label: z.string(),
+  action: ActionSchema,
+  style: z.string().optional()
+});
+
+const VNStageProps = z.object({
+  background: ImageAssetSchema,
+  bgm: z.string().optional(),
+  sfx: z.string().optional(),
+  characters: z.array(VNCharacterSchema).optional().default([]),
+  dialogue: VNDialogueSchema,
+  choices: z.array(VNChoiceSchema).optional(),
+}).passthrough();
+
+const VNStageNode = z.object({ vn_stage: VNStageProps });
 
 // ----------------------------------------------------------------------
 // EXPORTED VALIDATOR

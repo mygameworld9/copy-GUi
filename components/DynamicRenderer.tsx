@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { UINode, UIAction } from '../types';
 import { ComponentRegistry } from './ui/Registry';
@@ -124,9 +125,12 @@ const DynamicRenderer: React.FC<RendererProps> = ({ node, onAction, index = 0, p
     const registryKeys = Object.keys(ComponentRegistry);
     const registryStatus = registryKeys.length === 0 ? "EMPTY (Circular Dependency Detected)" : `Loaded (${registryKeys.length} items)`;
     
+    // Debug info
+    const keyStr = nodeKeys.length > 0 ? `"${nodeKeys[0]}"` : "UNDEFINED (Parsing Error)";
+    
     return (
       <div className="p-4 border border-dashed border-yellow-500/50 bg-yellow-500/10 text-yellow-500 text-xs font-mono rounded">
-        <div className="font-bold">⚠️ Unknown Component Type: "{nodeKeys[0]}"</div>
+        <div className="font-bold">⚠️ Unknown Component Type: {keyStr}</div>
         <div className="mt-1 opacity-50">Registry Status: {registryStatus}</div>
         {registryKeys.length > 0 && (
            <div className="mt-1 opacity-50">Available: {registryKeys.slice(0, 5).join(', ')}...</div>

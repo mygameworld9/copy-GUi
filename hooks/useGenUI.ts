@@ -471,8 +471,6 @@ export const useGenUI = () => {
         setLoading(true);
         // We need to access the LATEST state to submit valid data.
         // Since we are inside a callback, we can't 'await' setState.
-        // We will optimistically use 'messages' from closure, but for 100% accuracy,
-        // we should probably refactor this to be cleaner. For now, this is acceptable for prototypes.
         const lastUiMsg = [...messages].reverse().find(m => m.uiNode);
         if (!lastUiMsg || !lastUiMsg.uiNode) {
             setLoading(false);
@@ -480,10 +478,18 @@ export const useGenUI = () => {
         }
 
         const formData = collectFormData(lastUiMsg.uiNode);
-        const submissionText = `User Submitted Form Data: ${JSON.stringify(formData, null, 2)}`;
         
-        setMessages(prev => [...prev, { role: 'system', content: 'Submitting form data...' }]);
-        await handleGeneration(submissionText, "Form Submission");
+        // CRITICAL FIX: Merge the explicit payload from the action (e.g., choice intent)
+        // with the collected form data from the tree.
+        const combinedData = {
+            ...formData,
+            ...(action.payload || {})
+        };
+
+        const submissionText = `User Interaction/Form Data: ${JSON.stringify(combinedData, null, 2)}`;
+        
+        setMessages(prev => [...prev, { role: 'system', content: 'Submitting interaction...' }]);
+        await handleGeneration(submissionText, "Interaction Submission");
         setLoading(false);
         return;
     }

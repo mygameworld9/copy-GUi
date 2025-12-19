@@ -25,8 +25,8 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ config, onSave, 
   
   const recommendedModels = [
     {
-      id: 'gemini-2.5-flash',
-      name: 'Gemini 2.5 Flash',
+      id: 'gemini-3-flash-preview',
+      name: 'Gemini 3.0 Flash',
       description: 'Fastest, low latency. Best for responsive UI generation.',
       icon: Zap
     },
@@ -114,7 +114,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ config, onSave, 
                 value={localConfig.model}
                 onChange={(e) => setLocalConfig({ ...localConfig, model: e.target.value })}
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-mono"
-                placeholder="e.g. gemini-1.5-pro-latest"
+                placeholder="e.g. gemini-3-flash-preview"
               />
             </div>
             

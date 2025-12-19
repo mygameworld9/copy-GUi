@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import DynamicRenderer from './components/DynamicRenderer';
 import { 
@@ -6,7 +7,7 @@ import {
   ArrowUp, Activity, Gauge, Code2, PenTool, MousePointer2, Palette,
   PanelLeftClose, PanelLeft, Share2, ZoomIn, ZoomOut, RotateCcw, X, Target,
   Wand2, Layout, Layers, Command, ChevronRight, ChevronLeft, Undo2, Redo2, Split, MessageSquare,
-  RotateCw
+  RotateCw, Gamepad2
 } from 'lucide-react';
 import { CodeViewer } from './components/CodeViewer';
 import { SettingsDialog } from './components/SettingsDialog';
@@ -15,7 +16,7 @@ import { TreeView } from './components/TreeView';
 import { useGenUI } from './hooks/useGenUI';
 import { EditorProvider } from './components/EditorContext';
 import { ThemeProvider, useTheme } from './components/ThemeContext';
-import { ToastProvider } from './components/ui/Toast';
+import { ToastProvider, useToast } from './components/ui/Toast';
 import { generateTheme } from './services/themeAgent';
 import { UINode } from './types';
 import { ModalRenderer } from './components/ModalRenderer';
@@ -43,6 +44,7 @@ const Workspace = () => {
   
   // Audio Engine
   const { play } = useSound(config.soundEnabled);
+  const { showToast } = useToast();
 
   // Trigger sounds on state changes
   useEffect(() => {
@@ -259,7 +261,7 @@ const Workspace = () => {
                           type="text"
                           value={input}
                           onChange={(e) => { actions.setInput(e.target.value); play('TYPE'); }}
-                          placeholder={editMode && selectedPath ? `Refine this ${selectedName}...` : "Describe your UI..."}
+                          placeholder={editMode && selectedPath ? `Refine this ${selectedName}...` : context.mode === 'galgame' ? "Set the scene or dialogue..." : "Describe your UI..."}
                           className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 py-4 px-3 focus:outline-none font-medium"
                           disabled={loading || isGenerating}
                       />
@@ -278,7 +280,7 @@ const Workspace = () => {
                </form>
 
                {/* Mode Toggle & Metrics */}
-               <div className="flex items-center justify-between mt-4 px-1">
+               <div className="flex items-center justify-between mt-4 px-1 gap-2">
                    <div className="flex items-center gap-4 text-[10px] font-mono text-zinc-500 tracking-wide">
                       <div className="flex items-center gap-2">
                           <Activity className={`w-3 h-3 ${metrics.active ? 'text-emerald-500 animate-pulse' : ''}`} />
@@ -286,17 +288,40 @@ const Workspace = () => {
                       </div>
                    </div>
                    
-                   <button 
-                    onClick={() => { actions.setEditMode(!editMode); play('CLICK'); }}
-                    className={`text-[10px] flex items-center gap-2 px-4 py-1.5 rounded-full border transition-all duration-300 font-bold tracking-wider uppercase backdrop-blur-md ${
-                        editMode 
-                        ? 'bg-indigo-600/90 text-white border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.4)]' 
-                        : 'bg-white/5 border-white/10 text-slate-500 hover:text-slate-300 hover:bg-white/10'
-                    }`}
-                   >
-                       {editMode ? <PenTool className="w-3 h-3" /> : <Layout className="w-3 h-3" />}
-                       {editMode ? 'Design Mode' : 'View Mode'}
-                   </button>
+                   <div className="flex items-center gap-2">
+                      <button
+                          onClick={() => {
+                              const newMode = context.mode === 'galgame' ? 'default' : 'galgame';
+                              actions.setContext(p => ({ ...p, mode: newMode }));
+                              play('ACTIVATE');
+                              if (newMode === 'galgame') {
+                                  showToast({ type: 'SUCCESS', title: 'Galgame Engine', description: 'Visual Novel Mode Activated' });
+                              } else {
+                                  showToast({ type: 'INFO', title: 'Standard UI', description: 'Returned to Architect Mode' });
+                              }
+                          }}
+                          className={`text-[10px] flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-300 font-bold tracking-wider uppercase backdrop-blur-md ${
+                              context.mode === 'galgame'
+                              ? 'bg-pink-600/90 text-white border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.4)]'
+                              : 'bg-white/5 border-white/10 text-slate-500 hover:text-slate-300 hover:bg-white/10'
+                          }`}
+                      >
+                          <Gamepad2 className="w-3 h-3" />
+                          {context.mode === 'galgame' ? 'VN Mode' : 'UI Mode'}
+                      </button>
+
+                      <button 
+                        onClick={() => { actions.setEditMode(!editMode); play('CLICK'); }}
+                        className={`text-[10px] flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-300 font-bold tracking-wider uppercase backdrop-blur-md ${
+                            editMode 
+                            ? 'bg-indigo-600/90 text-white border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.4)]' 
+                            : 'bg-white/5 border-white/10 text-slate-500 hover:text-slate-300 hover:bg-white/10'
+                        }`}
+                      >
+                          {editMode ? <PenTool className="w-3 h-3" /> : <Layout className="w-3 h-3" />}
+                          {editMode ? 'Design' : 'View'}
+                      </button>
+                   </div>
                </div>
             </div>
           </div>

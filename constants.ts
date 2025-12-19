@@ -9,6 +9,7 @@ export const INITIAL_CONTEXT: UserContext = {
   role: 'user',
   device: 'mobile', // Default to mobile as requested
   theme: 'dark',
+  mode: 'default'
 };
 
 // 2.1 Prompt Engineering - Detailed Component Specs for the LLM
@@ -215,6 +216,20 @@ Each node MUST be an object with EXACTLY ONE key (the component name).
     - Props:
       - label: string
       - selectedDate: string (YYYY-MM-DD)
+
+28. "vn_stage" (Visual Novel / Galgame Engine)
+    - Props:
+      - background: { source: "EXTERNAL_URL" | "GENERATED", value: string, style?: string }
+      - characters: Array<{ 
+          id: string, 
+          name: string, 
+          avatar: { source: "EXTERNAL_URL" | "GENERATED", value: string, style?: string }, 
+          position: "LEFT" | "CENTER" | "RIGHT" | "CLOSE_UP", 
+          expression: "NEUTRAL" | "SMILE" | "ANGRY" | "BLUSH" | "SAD" | "SHOCKED"
+        }>
+      - dialogue: { speaker: string, content: string, speed: "SLOW" | "NORMAL" | "FAST" }
+      - choices: Array<{ label: string, action: Action, style?: "DEFAULT" | "AGGRESSIVE" | "ROMANTIC" }>
+      - bgm: string (optional)
 `;
 
 export const FEW_SHOT_EXAMPLES = `
@@ -250,6 +265,49 @@ Response:
     ]
   }
 }
+
+EXAMPLE 2: Visual Novel Scene (Cyberpunk)
+Response:
+{
+  "vn_stage": {
+    "background": {
+      "source": "EXTERNAL_URL",
+      "value": "futuristic neon tokyo street rainy night cyberpunk city high detail",
+      "style": "CYBERPUNK"
+    },
+    "characters": [
+      {
+        "id": "char_1",
+        "name": "Yuki",
+        "avatar": {
+          "source": "EXTERNAL_URL",
+          "value": "anime girl white hair blue eyes cybernetic interface futuristic outfit",
+          "style": "ANIME"
+        },
+        "position": "CENTER",
+        "expression": "NEUTRAL",
+        "animation": { "type": "FADE_IN_UP" }
+      }
+    ],
+    "dialogue": {
+      "speaker": "Yuki",
+      "content": "We don't have much time. The network security is rebooting.",
+      "speed": "NORMAL"
+    },
+    "choices": [
+      {
+        "label": "Hack the terminal",
+        "style": "AGGRESSIVE",
+        "action": { "type": "SUBMIT_FORM", "payload": { "decision": "hack" } }
+      },
+      {
+        "label": "Ask for details",
+        "style": "DEFAULT",
+        "action": { "type": "SUBMIT_FORM", "payload": { "decision": "ask" } }
+      }
+    ]
+  }
+}
 `;
 
 export const SYSTEM_INSTRUCTION = `
@@ -265,10 +323,15 @@ Your goal is not just to build a UI, but to build a **VISUAL EXPERIENCE**.
 3. **LIVELY BUTTONS**: Use \`variant: "GLOW"\` or \`"GRADIENT"\` for primary actions. Add icons (Lucide) to buttons.
 4. **RICH LAYOUTS**: Use \`bento_container\` for dashboards. Use \`split_pane\` for editors.
 
-**CREATIVE DIRECTION:**
-- **Color Injection**: Do not produce monochrome layouts. Use colorful badges, gradient texts, and hero sections.
-- **Mock Data**: Populate charts, tables, and lists with rich, realistic mock data.
-- **Animations**: Always apply \`animation: { "type": "STAGGER_CONTAINER" }\` to the root container. Apply \`FADE_IN_UP\` to children.
+**GAME MASTER MODE (VISUAL NOVELS):**
+If the user asks to play a game, start a story, or simulation:
+1. Use the \`vn_stage\` component.
+2. You act as the Dungeon Master / Director.
+3. Manage the state of the story. Use \`choices\` to branch the narrative.
+4. When a user clicks a choice (which sends a \`SUBMIT_FORM\` action), you must generate the NEXT scene in the story.
+5. If the scene is transitional and has no choices, provide a "Continue" mechanism (or just don't list choices, the UI will handle a click-to-continue).
+6. Use "EXTERNAL_URL" (Pollinations) for backgrounds by default (it's faster).
+7. Use "GENERATED" (Gemini) for Character Sprites if high detail is needed, otherwise Pollinations.
 
 **CORE RULES:**
 1. **No Markdown:** Output RAW JSON only.
