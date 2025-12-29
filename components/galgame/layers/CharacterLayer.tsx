@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VNCharacter } from '../../../types';
 import { resolveImage } from '../../../services/imageFactory';
@@ -10,13 +10,25 @@ interface CharacterLayerProps {
 
 const CharacterSprite: React.FC<{ char: VNCharacter }> = ({ char }) => {
   const [imgSrc, setImgSrc] = useState<string>('');
+  const isMounted = useRef(true);
 
-  const { source, value, style } = char.avatar;
+  // Defensive: Ensure avatar object exists
+  const avatar = char?.avatar;
+  const source = avatar?.source;
+  const value = avatar?.value;
+  const style = avatar?.style;
 
   useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!avatar || !source || !value) return;
+
     let active = true;
-    resolveImage(char.avatar).then(url => {
-      if (active) setImgSrc(url);
+    resolveImage(avatar).then(url => {
+      if (active && isMounted.current) setImgSrc(url);
     });
     return () => { active = false; };
   }, [source, value, style]);
@@ -40,6 +52,7 @@ const CharacterSprite: React.FC<{ char: VNCharacter }> = ({ char }) => {
       }
   };
 
+  // If we have data but no image yet (loading), or missing data, render nothing or placeholder
   if (!imgSrc) return null;
 
   return (
@@ -64,7 +77,7 @@ export const CharacterLayer: React.FC<CharacterLayerProps> = ({ characters }) =>
   return (
     <div className="absolute inset-0 z-10 pointer-events-none flex items-end justify-center overflow-hidden">
         <AnimatePresence>
-            {characters.map(char => (
+            {characters && characters.map(char => (
                 <CharacterSprite key={char.id} char={char} />
             ))}
         </AnimatePresence>
